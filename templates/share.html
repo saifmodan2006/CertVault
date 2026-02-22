@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}{{ cert.title }} – Shared Certificate{% endblock %}
+{% block content %}
+<div class="share-page">
+  <div class="share-hero text-center">
+    <div class="share-badge">🎓 Verified Certificate</div>
+    <h1 class="share-title">{{ cert.title }}</h1>
+    <p class="share-issuer"><i class="bi bi-building me-1"></i>{{ cert.issuer }}</p>
+  </div>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        {% if cert.file_path %}
+        <div class="card-glass overflow-hidden mb-4 animate-fade-up">
+          {% if cert.file_type == 'pdf' %}
+            <iframe src="{{ url_for('uploaded_file', filename=cert.file_path) }}" style="width:100%;height:600px;border:none"></iframe>
+          {% elif cert.file_type in ['jpg','jpeg','png','gif','webp'] %}
+            <img src="{{ url_for('uploaded_file', filename=cert.file_path) }}" style="width:100%;display:block" alt="{{ cert.title }}">
+          {% endif %}
+        </div>
+        {% endif %}
+        <div class="card-glass p-4 animate-fade-up">
+          <div class="row g-3">
+            <div class="col-sm-6"><div class="info-label">Issued by</div><div class="fw-600">{{ cert.issuer }}</div></div>
+            <div class="col-sm-6"><div class="info-label">Issue Date</div><div class="fw-600">{{ cert.issue_date|fmtdate }}</div></div>
+            {% if cert.expiry_date %}
+            <div class="col-sm-6"><div class="info-label">Expiry</div>
+              <div class="fw-600 {% if cert.is_expired %}text-danger{% endif %}">{{ cert.expiry_date|fmtdate }}{% if cert.is_expired %} <span class="badge bg-danger">Expired</span>{% endif %}</div>
+            </div>
+            {% endif %}
+            <div class="col-sm-6"><div class="info-label">Certificate ID</div><div class="fw-600 font-monospace small">{{ cert.unique_id[:16] }}...</div></div>
+            {% if cert.description %}<div class="col-12"><div class="info-label">Description</div><p>{{ cert.description }}</p></div>{% endif %}
+            {% if cert.tag_list %}<div class="col-12"><div class="info-label mb-2">Skills</div><div class="d-flex flex-wrap gap-1">{% for tag in cert.tag_list %}<span class="badge badge-tag">{{ tag }}</span>{% endfor %}</div></div>{% endif %}
+          </div>
+          <hr>
+          <div class="d-flex gap-2 flex-wrap">
+            {% if cert.file_path %}<a href="{{ url_for('uploaded_file', filename=cert.file_path) }}" download class="btn btn-primary-gradient"><i class="bi bi-download me-1"></i>Download</a>{% endif %}
+            <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Print</button>
+            <button onclick="copyUrl()" class="btn btn-outline-primary-custom"><i class="bi bi-share me-1"></i>Share</button>
+          </div>
+          <div class="mt-3 p-3 rounded-3 bg-success-subtle d-flex align-items-center gap-2">
+            <i class="bi bi-shield-check-fill fs-5 text-success"></i>
+            <div><div class="fw-600 text-success">Verified Certificate</div><small class="text-muted">Securely stored and verified by CertVault</small></div>
+          </div>
+        </div>
+        <div class="text-center mt-4">
+          <p class="text-muted small">Powered by <a href="{{ url_for('index') }}" class="auth-link">CertVault</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>function copyUrl() { navigator.clipboard.writeText(window.location.href); showToast('Link copied! 📋', 'success'); }</script>
+{% endblock %}

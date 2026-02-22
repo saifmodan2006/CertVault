@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard – CertVault{% endblock %}
+{% block content %}
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="avatar-lg">{{ user.name[0].upper() }}</div>
+      <div class="ms-2">
+        <div class="fw-600">{{ user.name }}</div>
+        <small class="text-muted">{{ user.email }}</small>
+        {% if not user.email_verified %}<small class="text-warning d-block">⚠️ Email not verified</small>{% endif %}
+      </div>
+    </div>
+    <nav class="sidebar-nav mt-3">
+      <a href="{{ url_for('dashboard') }}" class="sidebar-link active"><i class="bi bi-grid-1x2"></i>Dashboard</a>
+      <a href="{{ url_for('certificates') }}" class="sidebar-link"><i class="bi bi-collection"></i>All Certificates</a>
+      <a href="{{ url_for('upload') }}" class="sidebar-link"><i class="bi bi-cloud-upload"></i>Upload New</a>
+      <a href="{{ url_for('profile') }}" class="sidebar-link"><i class="bi bi-person-circle"></i>Profile</a>
+      {% if user.is_admin %}<a href="{{ url_for('admin') }}" class="sidebar-link"><i class="bi bi-shield-check"></i>Admin Panel</a>{% endif %}
+      <hr>
+      <a href="{{ url_for('logout') }}" class="sidebar-link text-danger"><i class="bi bi-box-arrow-right"></i>Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <button class="btn btn-icon sidebar-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+      <div>
+        <h4 class="mb-0">Welcome back, {{ user.name.split()[0] }}! 👋</h4>
+        <small class="text-muted">Here's your certificate portfolio overview</small>
+      </div>
+      <div class="ms-auto">
+        <a href="{{ url_for('upload') }}" class="btn btn-primary-gradient"><i class="bi bi-plus-circle me-1"></i>Upload</a>
+      </div>
+    </div>
+
+    <!-- Email Verification Banner -->
+    {% if not user.email_verified %}
+    <div class="alert-banner alert-info-custom animate-fade-up" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+      <i class="bi bi-info-circle-fill"></i>
+      <span style="color: white; font-weight: 500;">Please verify your email address to access all features. Check your inbox for the verification link.</span>
+      <a href="{{ url_for('profile') }}" class="ms-2 btn btn-sm btn-light">Resend Verification</a>
+    </div>
+    {% endif %}
+
+    <!-- Alerts -->
+    {% if expiring %}
+    <div class="alert-banner alert-warning-custom animate-fade-up">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <strong>{{ expiring|length }} certificate{{ 's' if expiring|length > 1 else '' }} expiring soon!</strong>
+      {% for c in expiring[:3] %}<a href="{{ url_for('certificate_detail', cid=c.id) }}" class="ms-2 badge bg-warning text-dark">{{ c.title }} ({{ c.days_until_expiry }}d)</a>{% endfor %}
+    </div>
+    {% endif %}
+    {% if expired %}
+    <div class="alert-banner alert-danger-custom animate-fade-up">
+      <i class="bi bi-x-octagon-fill"></i>
+      <strong>{{ expired|length }} certificate{{ 's' if expired|length > 1 else '' }} have expired!</strong>
+      {% for c in expired[:3] %}<a href="{{ url_for('certificate_detail', cid=c.id) }}" class="ms-2 badge bg-danger">{{ c.title }}</a>{% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row g-2 mb-4">
+      <div class="col-auto">
+        <a href="{{ url_for('upload') }}" class="btn btn-sm btn-outline-primary-custom"><i class="bi bi-cloud-upload me-1"></i>Upload Certificate</a>
+      </div>
+      <div class="col-auto">
+        <a href="{{ url_for('certificates') }}" class="btn btn-sm btn-outline-primary-custom"><i class="bi bi-search me-1"></i>Browse Certificates</a>
+      </div>
+      <div class="col-auto">
+        <a href="{{ url_for('profile') }}" class="btn btn-sm btn-outline-primary-custom"><i class="bi bi-gear me-1"></i>Settings</a>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-sm-6 col-xl-3">
+        <div class="stat-card animate-fade-up" style="--card-color:#6c5ce7">
+          <div class="stat-icon"><i class="bi bi-award"></i></div>
+          <div class="stat-value">{{ certs|length }}</div>
+          <div class="stat-label">Total Certificates</div>
+          <div class="stat-trend"><i class="bi bi-arrow-up-right"></i> All time</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="stat-card animate-fade-up" style="--card-color:#00b894; animation-delay:.1s">
+          <div class="stat-icon"><i class="bi bi-globe"></i></div>
+          <div class="stat-value">{{ public_count }}</div>
+          <div class="stat-label">Public Certificates</div>
+          <div class="stat-trend"><i class="bi bi-share"></i> Shared</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="stat-card animate-fade-up" style="--card-color:#fd79a8; animation-delay:.2s">
+          <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+          <div class="stat-value">{{ expiring|length }}</div>
+          <div class="stat-label">Expiring Soon</div>
+          <div class="stat-trend"><i class="bi bi-calendar-x"></i> 30 days</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="stat-card animate-fade-up" style="--card-color:#0984e3; animation-delay:.3s">
+          <div class="stat-icon"><i class="bi bi-tags"></i></div>
+          <div class="stat-value">{{ categories|length }}</div>
+          <div class="stat-label">Categories</div>
+          <div class="stat-trend"><i class="bi bi-grid"></i> Organized</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts + Recent -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-8">
+        <div class="card-glass p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-600 mb-0">📊 Certificate Activity</h6>
+            <span class="badge bg-primary-soft text-primary">Last 6 months</span>
+          </div>
+          <canvas id="activityChart" height="200"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card-glass p-4 h-100">
+          <h6 class="fw-600 mb-3">📂 Categories</h6>
+          <canvas id="categoryChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Certificates -->
+    <div class="card-glass p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-600 mb-0">🆕 Recent Certificates</h6>
+        <a href="{{ url_for('certificates') }}" class="btn btn-sm btn-outline-primary-custom">View All</a>
+      </div>
+      {% if recent %}
+      <div class="row g-3">
+        {% for cert in recent %}
+        <div class="col-md-6 col-xl-4">
+          <div class="cert-mini-card animate-fade-up">
+            <div class="cert-mini-icon" style="background: var(--gradient-primary)">
+              <i class="bi bi-{% if cert.file_type == 'pdf' %}file-pdf{% elif cert.file_type in ['jpg','jpeg','png','webp'] %}image{% else %}award{% endif %}"></i>
+            </div>
+            <div class="cert-mini-body">
+              <div class="cert-mini-title">{{ cert.title }}</div>
+              <div class="cert-mini-issuer text-muted">{{ cert.issuer }}</div>
+              <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                <span class="badge badge-category">{{ cert.category }}</span>
+                {% if cert.is_expired %}<span class="badge bg-danger">Expired</span>
+                {% elif cert.expiring_soon %}<span class="badge bg-warning text-dark">Expiring</span>
+                {% elif cert.is_public %}<span class="badge bg-success">Public</span>
+                {% endif %}
+              </div>
+            </div>
+            <a href="{{ url_for('certificate_detail', cid=cert.id) }}" class="stretched-link"></a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state py-4">
+        <div class="empty-icon">🎓</div>
+        <h5>No certificates yet!</h5>
+        <p class="text-muted">Upload your first certificate to get started</p>
+        <a href="{{ url_for('upload') }}" class="btn btn-primary-gradient">Upload Certificate</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Activity Log -->
+    {% if logs %}
+    <div class="card-glass p-4 mt-4">
+      <h6 class="fw-600 mb-3"><i class="bi bi-activity me-2"></i>📝 Recent Activity</h6>
+      <div class="activity-timeline">
+        {% for log in logs %}
+        <div class="activity-item">
+          <div class="activity-dot bg-{% if log.action == 'UPLOAD' %}success{% elif log.action == 'DELETE' %}danger{% elif log.action == 'LOGIN' %}primary{% else %}warning{% endif %}"></div>
+          <div class="activity-content">
+            <span class="activity-action">{{ log.action.replace('_', ' ').title() }}</span>
+            {% if log.details %}<span class="text-muted ms-1">{{ log.details }}</span>{% endif %}
+          </div>
+          <div class="activity-time text-muted">{{ log.created_at|fmtdatetime }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+fetch('/api/stats').then(r => r.json()).then(data => {
+  const months = Object.keys(data.monthly);
+  const values = Object.values(data.monthly);
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#aaa' : '#666';
+
+  // Activity chart
+  new Chart(document.getElementById('activityChart'), {
+    type: 'bar',
+    data: {
+      labels: months.slice(-6),
+      datasets: [{
+        label: 'Certificates',
+        data: values.slice(-6),
+        backgroundColor: 'rgba(108,92,231,0.15)',
+        borderColor: '#6c5ce7',
+        borderWidth: 2,
+        borderRadius: 8,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: textColor } },
+        y: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { color: textColor, stepSize: 1 } }
+      }
+    }
+  });
+
+  // Category chart
+  const cats = Object.keys(data.categories);
+  const catVals = Object.values(data.categories);
+  const colors = ['#6c5ce7','#00b894','#fd79a8','#0984e3','#e17055','#fdcb6e','#a29bfe'];
+  new Chart(document.getElementById('categoryChart'), {
+    type: 'doughnut',
+    data: { labels: cats, datasets: [{ data: catVals, backgroundColor: colors, borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: textColor, padding: 12, font: { size: 11 } } }
+      },
+      cutout: '70%'
+    }
+  });
+});
+</script>
+{% endblock %}

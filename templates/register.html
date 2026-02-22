@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block title %}Register – CertVault{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <div class="auth-left d-none d-lg-flex">
+    <div class="auth-left-content">
+      <div class="brand-text fs-3 mb-4">🎓 Cert<span class="brand-accent">Vault</span></div>
+      <h2 class="text-white mb-3">Start your journey!</h2>
+      <p class="text-white-50 mb-4">Create your free account and start organizing your certificates today.</p>
+      <div class="auth-features">
+        <div class="auth-feature-item"><i class="bi bi-check-circle-fill text-success me-2"></i>Free forever plan</div>
+        <div class="auth-feature-item"><i class="bi bi-check-circle-fill text-success me-2"></i>No credit card required</div>
+        <div class="auth-feature-item"><i class="bi bi-check-circle-fill text-success me-2"></i>Unlimited certificates</div>
+        <div class="auth-feature-item"><i class="bi bi-check-circle-fill text-success me-2"></i>Instant setup</div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-card animate-fade-up">
+      <div class="auth-header">
+        <h3>Create Account</h3>
+        <p class="text-muted">Join CertVault – it's completely free!</p>
+      </div>
+      <form method="POST" action="{{ url_for('register') }}" class="auth-form" novalidate>
+        <div class="form-floating mb-3">
+          <input type="text" class="form-control custom-input" id="name" name="name" placeholder="Full Name" required minlength="2">
+          <label for="name"><i class="bi bi-person me-1"></i>Full Name</label>
+          <small class="text-muted d-block mt-1">At least 2 characters</small>
+        </div>
+        <div class="form-floating mb-3">
+          <input type="email" class="form-control custom-input" id="email" name="email" placeholder="Email" required>
+          <label for="email"><i class="bi bi-envelope me-1"></i>Email address</label>
+          <small class="text-muted d-block mt-1">We'll verify your email address</small>
+        </div>
+        <div class="form-floating mb-3 position-relative">
+          <input type="password" class="form-control custom-input pe-5" id="password" name="password"
+                 placeholder="Password" required minlength="8" oninput="checkPasswordStrength(this.value)">
+          <label for="password"><i class="bi bi-lock me-1"></i>Password</label>
+          <button type="button" class="btn btn-link password-toggle" onclick="togglePassword('password')">
+            <i class="bi bi-eye" id="password-icon"></i>
+          </button>
+        </div>
+
+        <!-- Password Requirements -->
+        <div class="password-requirements mb-3 p-3 rounded" style="background: rgba(108,92,231,0.1); border: 1px solid rgba(108,92,231,0.2);">
+          <small class="d-block mb-2 fw-600" style="color: #333;">Password Requirements:</small>
+          <div class="requirement-item">
+            <i class="bi bi-dash-circle" id="req-length"></i>
+            <span>At least 8 characters</span>
+          </div>
+          <div class="requirement-item">
+            <i class="bi bi-dash-circle" id="req-uppercase"></i>
+            <span>At least one uppercase letter (A-Z)</span>
+          </div>
+          <div class="requirement-item">
+            <i class="bi bi-dash-circle" id="req-number"></i>
+            <span>At least one number (0-9)</span>
+          </div>
+        </div>
+
+        <div class="password-strength mb-3">
+          <div class="strength-bar"><div id="strengthFill"></div></div>
+          <small id="strengthText" class="text-muted"></small>
+        </div>
+
+        <div class="form-floating mb-3 position-relative">
+          <input type="password" class="form-control custom-input pe-5" id="confirm_password" name="confirm_password"
+                 placeholder="Confirm Password" required oninput="checkPasswordMatch()">
+          <label for="confirm_password"><i class="bi bi-lock-fill me-1"></i>Confirm Password</label>
+          <button type="button" class="btn btn-link password-toggle" onclick="togglePassword('confirm_password')">
+            <i class="bi bi-eye" id="confirm_password-icon"></i>
+          </button>
+        </div>
+        <div id="passwordMatchError" class="text-danger small mb-3" style="display: none;">
+          <i class="bi bi-exclamation-circle me-1"></i>Passwords do not match
+        </div>
+        <button type="submit" class="btn btn-primary-gradient w-100 btn-lg mt-3" id="submitBtn" disabled>
+          <i class="bi bi-person-plus me-2"></i>Create Free Account
+        </button>
+      </form>
+      <div class="auth-footer mt-4 text-center">
+        <p class="text-muted">Already have an account? <a href="{{ url_for('login') }}" class="auth-link">Sign in</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function checkPasswordStrength(pw) {
+  const fill = document.getElementById('strengthFill');
+  const text = document.getElementById('strengthText');
+
+  // Check requirements
+  const hasLength = pw.length >= 8;
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasNumber = /[0-9]/.test(pw);
+
+  // Update requirement indicators
+  updateRequirement('req-length', hasLength);
+  updateRequirement('req-uppercase', hasUpper);
+  updateRequirement('req-number', hasNumber);
+
+  // Calculate strength score
+  let score = 0;
+  if (hasLength) score++;
+  if (hasUpper) score++;
+  if (hasNumber) score++;
+
+  const labels = ['', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+  const colors = ['', '#e17055', '#fdcb6e', '#00b894', '#6c5ce7'];
+  fill.style.width = (score * 25) + '%';
+  fill.style.background = colors[score];
+  text.textContent = labels[score] || '';
+  text.style.color = colors[score];
+
+  // Update submit button state
+  checkPasswordMatch();
+}
+
+function updateRequirement(id, met) {
+  const el = document.getElementById(id);
+  if (met) {
+    el.className = 'bi bi-check-circle-fill text-success';
+  } else {
+    el.className = 'bi bi-dash-circle text-muted';
+  }
+}
+
+function checkPasswordMatch() {
+  const pw = document.getElementById('password').value;
+  const confirm = document.getElementById('confirm_password').value;
+  const errorDiv = document.getElementById('passwordMatchError');
+  const submitBtn = document.getElementById('submitBtn');
+
+  const hasLength = pw.length >= 8;
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasNumber = /[0-9]/.test(pw);
+  const passwordsMatch = pw && confirm && pw === confirm;
+  const passwordsValid = hasLength && hasUpper && hasNumber;
+
+  if (confirm && !passwordsMatch) {
+    errorDiv.style.display = 'block';
+  } else {
+    errorDiv.style.display = 'none';
+  }
+
+  // Enable submit only if all requirements are met
+  submitBtn.disabled = !(passwordsValid && passwordsMatch && pw && confirm);
+}
+
+// Add CSS for requirement items
+const style = document.createElement('style');
+style.textContent = `
+  .requirement-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+  }
+  .requirement-item i {
+    font-size: 1rem;
+  }
+  .requirement-item span {
+    color: #666;
+  }
+  [data-theme="dark"] .requirement-item span {
+    color: #aaa;
+  }
+  [data-theme="dark"] .password-requirements {
+    background: rgba(108,92,231,0.2) !important;
+    border-color: rgba(108,92,231,0.3) !important;
+  }
+  [data-theme="dark"] .password-requirements small {
+    color: #fff !important;
+  }
+  #submitBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  #submitBtn[disabled]:hover {
+    transform: none;
+  }
+`;
+document.head.appendChild(style);
+
+// Auto-focus and form submission validation
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('name').focus();
+
+  document.querySelector('.auth-form').addEventListener('submit', function(e) {
+    const pw = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm_password').value;
+    const hasLength = pw.length >= 8;
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasNumber = /[0-9]/.test(pw);
+
+    if (!hasLength || !hasUpper || !hasNumber || pw !== confirm) {
+      e.preventDefault();
+      alert('Please ensure all password requirements are met and passwords match.');
+    }
+  });
+});
+</script>
+{% endblock %}

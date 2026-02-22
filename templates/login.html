@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Login – CertVault{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <div class="auth-left d-none d-lg-flex">
+    <div class="auth-left-content">
+      <div class="brand-text fs-3 mb-4">🎓 Cert<span class="brand-accent">Vault</span></div>
+      <h2 class="text-white mb-3">Welcome back!</h2>
+      <p class="text-white-50 mb-4">Sign in to access your certificate vault and manage your credentials.</p>
+      <div class="auth-features">
+        <div class="auth-feature-item"><i class="bi bi-check-circle-fill text-success me-2"></i>Permanent certificate storage</div>
+        <div class="auth-feature-item"><i class="bi bi-check-circle-fill text-success me-2"></i>Shareable links & QR codes</div>
+        <div class="auth-feature-item"><i class="bi bi-check-circle-fill text-success me-2"></i>Expiry date tracking</div>
+        <div class="auth-feature-item"><i class="bi bi-check-circle-fill text-success me-2"></i>Bank-level security</div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-card animate-fade-up">
+      <div class="auth-header">
+        <h3>Sign In</h3>
+        <p class="text-muted">Enter your credentials to continue</p>
+      </div>
+      <form method="POST" action="{{ url_for('login') }}" class="auth-form" novalidate>
+        <div class="form-floating mb-3">
+          <input type="email" class="form-control custom-input" id="email" name="email" placeholder="Email" required autofocus>
+          <label for="email"><i class="bi bi-envelope me-1"></i>Email address</label>
+        </div>
+        <div class="form-floating mb-3 position-relative">
+          <input type="password" class="form-control custom-input pe-5" id="password" name="password" placeholder="Password" required>
+          <label for="password"><i class="bi bi-lock me-1"></i>Password</label>
+          <button type="button" class="btn btn-link password-toggle" onclick="togglePassword('password')">
+            <i class="bi bi-eye" id="password-icon"></i>
+          </button>
+        </div>
+        <button type="submit" class="btn btn-primary-gradient w-100 btn-lg mt-2">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </button>
+      </form>
+      <script>
+        // Add keyboard shortcut for login
+        document.querySelector('.auth-form').addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            this.submit();
+          }
+        });
+      </script>
+      <div class="auth-footer mt-4 text-center">
+        <p class="text-muted">Don't have an account? <a href="{{ url_for('register') }}" class="auth-link">Create one free</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

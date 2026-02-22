@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% block title %}{{ cert.title }} – CertVault{% endblock %}
+{% block content %}
+<div class="page-container">
+  <div class="page-header animate-fade-up">
+    <a href="{{ url_for('certificates') }}" class="btn btn-back"><i class="bi bi-arrow-left"></i> Back</a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Certificate Preview -->
+    <div class="col-lg-7">
+      <div class="card-glass p-0 overflow-hidden animate-fade-up">
+        <div class="cert-preview-header">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge badge-category">{{ cert.category }}</span>
+            {% if cert.is_public %}<span class="badge bg-success"><i class="bi bi-globe me-1"></i>Public</span>
+            {% else %}<span class="badge bg-secondary"><i class="bi bi-lock me-1"></i>Private</span>{% endif %}
+            {% if cert.is_expired %}<span class="badge bg-danger">Expired</span>
+            {% elif cert.expiring_soon %}<span class="badge bg-warning text-dark">Expiring in {{ cert.days_until_expiry }} days</span>{% endif %}
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('edit_certificate', cid=cert.id) }}" class="btn btn-sm btn-outline-primary-custom">
+              <i class="bi bi-pencil me-1"></i>Edit
+            </a>
+            <form method="POST" action="{{ url_for('delete_certificate', cid=cert.id) }}" onsubmit="return confirm('Delete this certificate permanently?')">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+            </form>
+          </div>
+        </div>
+        <div class="cert-preview-body">
+          {% if cert.file_path %}
+            {% if cert.file_type == 'pdf' %}
+              <div class="pdf-viewer-container">
+                <iframe src="{{ url_for('uploaded_file', filename=cert.file_path) }}" class="pdf-iframe" frameborder="0"></iframe>
+              </div>
+            {% elif cert.file_type in ['jpg','jpeg','png','gif','webp'] %}
+              <img src="{{ url_for('uploaded_file', filename=cert.file_path) }}" class="cert-img-preview" alt="{{ cert.title }}">
+            {% endif %}
+          {% else %}
+            <div class="no-file-preview">
+              <div class="no-file-icon">🎓</div>
+              <p class="text-muted">No file attached</p>
+            </div>
+          {% endif %}
+        </div>
+        {% if cert.file_path %}
+        <div class="cert-preview-footer">
+          <a href="{{ url_for('download_certificate', cid=cert.id) }}" class="btn btn-primary-gradient btn-sm">
+            <i class="bi bi-download me-1"></i>Download
+          </a>
+          <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i>Print
+          </button>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Certificate Info -->
+    <div class="col-lg-5">
+      <div class="card-glass p-4 animate-fade-up" style="animation-delay:.1s">
+        <h3 class="fw-700 mb-1">{{ cert.title }}</h3>
+        <p class="text-muted mb-3"><i class="bi bi-building me-1"></i>{{ cert.issuer }}</p>
+
+        {% if cert.description %}
+        <p class="mb-3">{{ cert.description }}</p>
+        {% endif %}
+
+        <div class="info-grid mb-3">
+          <div class="info-item">
+            <div class="info-label"><i class="bi bi-calendar-check me-1"></i>Issue Date</div>
+            <div class="info-value">{{ cert.issue_date|fmtdate }}</div>
+          </div>
+          {% if cert.expiry_date %}
+          <div class="info-item">
+            <div class="info-label"><i class="bi bi-calendar-x me-1"></i>Expiry Date</div>
+            <div class="info-value {% if cert.is_expired %}text-danger{% elif cert.expiring_soon %}text-warning{% endif %}">
+              {{ cert.expiry_date|fmtdate }}
+              {% if cert.is_expired %}<span class="badge bg-danger ms-1">Expired</span>{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          <div class="info-item">
+            <div class="info-label"><i class="bi bi-fingerprint me-1"></i>Certificate ID</div>
+            <div class="info-value font-monospace small">{{ cert.unique_id[:20] }}...</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label"><i class="bi bi-calendar me-1"></i>Uploaded</div>
+            <div class="info-value">{{ cert.created_at|fmtdate }}</div>
+          </div>
+        </div>
+
+        {% if cert.tag_list %}
+        <div class="mb-3">
+          <div class="info-label mb-2"><i class="bi bi-tags me-1"></i>Skills & Tags</div>
+          <div class="d-flex flex-wrap gap-1">
+            {% for tag in cert.tag_list %}<span class="badge badge-tag">{{ tag }}</span>{% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Privacy Toggle -->
+        <div class="privacy-toggle-row mb-3">
+          <div>
+            <div class="fw-500">Public Visibility</div>
+            <div class="text-muted small">Anyone with the link can view</div>
+          </div>
+          <div class="form-check form-switch ms-auto">
+            <input class="form-check-input" type="checkbox" id="privacyToggle" role="switch"
+                   {% if cert.is_public %}checked{% endif %} onchange="togglePrivacy({{ cert.id }}, this)">
+          </div>
+        </div>
+
+        <!-- Share Section -->
+        <div class="share-section" id="shareSection" {% if not cert.is_public %}style="display:none"{% endif %}>
+          <div class="info-label mb-2"><i class="bi bi-share me-1"></i>Share Link</div>
+          <div class="input-group mb-2">
+            <input type="text" class="form-control custom-input font-monospace small" id="shareUrl"
+                   value="{{ cert.share_url }}" readonly>
+            <button class="btn btn-outline-primary-custom" onclick="copyLink()">
+              <i class="bi bi-clipboard" id="copyIcon"></i>
+            </button>
+          </div>
+          <button class="btn btn-sm btn-outline-secondary w-100" onclick="showQR({{ cert.id }})">
+            <i class="bi bi-qr-code me-1"></i>Show QR Code
+          </button>
+        </div>
+
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+          <a href="{{ url_for('edit_certificate', cid=cert.id) }}" class="btn btn-outline-primary-custom flex-fill">
+            <i class="bi bi-pencil me-1"></i>Edit
+          </a>
+          {% if cert.file_path %}
+          <a href="{{ url_for('download_certificate', cid=cert.id) }}" class="btn btn-primary-gradient flex-fill">
+            <i class="bi bi-download me-1"></i>Download
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content border-0 card-glass">
+      <div class="modal-header border-0">
+        <h6 class="modal-title fw-600">QR Code</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div id="qrLoading" class="py-3"><div class="spinner-border text-primary"></div></div>
+        <img id="qrImage" src="" alt="QR Code" class="img-fluid d-none rounded-3" style="max-width:200px">
+        <div class="mt-3">
+          <small class="text-muted">Scan to view certificate</small>
+        </div>
+        <a id="qrDownload" href="" download="certificate-qr.png" class="btn btn-sm btn-primary-gradient mt-2 d-none">
+          <i class="bi bi-download me-1"></i>Download QR
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function togglePrivacy(certId, checkbox) {
+  fetch(`/api/toggle-privacy/${certId}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      const shareSection = document.getElementById('shareSection');
+      if (data.is_public) {
+        shareSection.style.display = '';
+        showToast('Certificate is now public! 🌍', 'success');
+      } else {
+        shareSection.style.display = 'none';
+        showToast('Certificate is now private 🔒', 'info');
+      }
+    });
+}
+
+function copyLink() {
+  const url = document.getElementById('shareUrl').value;
+  if (!url) {
+    showToast('Share URL not available', 'danger');
+    return;
+  }
+  navigator.clipboard.writeText(url).then(() => {
+    document.getElementById('copyIcon').className = 'bi bi-check-lg text-success';
+    showToast('Link copied to clipboard! 📋', 'success');
+    setTimeout(() => document.getElementById('copyIcon').className = 'bi bi-clipboard', 2000);
+  }).catch(err => {
+    showToast('Failed to copy link. Try again.', 'danger');
+    console.error('Clipboard error:', err);
+  });
+}
+
+function showQR(certId) {
+  const modal = new bootstrap.Modal(document.getElementById('qrModal'));
+  modal.show();
+  document.getElementById('qrLoading').classList.remove('d-none');
+  document.getElementById('qrImage').classList.add('d-none');
+  document.getElementById('qrDownload').classList.add('d-none');
+  fetch(`/api/qr/${certId}`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('qrLoading').classList.add('d-none');
+      const img = document.getElementById('qrImage');
+      img.src = data.qr;
+      img.classList.remove('d-none');
+      const dl = document.getElementById('qrDownload');
+      dl.href = data.qr;
+      dl.classList.remove('d-none');
+    }).catch(err => {
+      document.getElementById('qrLoading').classList.add('d-none');
+      showToast('Failed to generate QR code', 'danger');
+      console.error('QR error:', err);
+    });
+}
+</script>
+{% endblock %}

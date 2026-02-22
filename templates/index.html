@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}CertVault – Manage Your Certificates Forever{% endblock %}
+{% block content %}
+
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+  <div class="container text-center position-relative">
+    <div class="hero-badge animate-fade-up">🚀 Trusted Certificate Platform</div>
+    <h1 class="hero-title animate-fade-up" style="animation-delay:.1s">
+      Store, Share & Manage Your<br><span class="gradient-text">Certificates Forever</span>
+    </h1>
+    <p class="hero-subtitle animate-fade-up" style="animation-delay:.2s">
+      Upload your digital certificates, generate shareable links, track expiry dates,<br>
+      and never lose an important credential again.
+    </p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap animate-fade-up" style="animation-delay:.3s">
+      {% if current_user %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary-gradient btn-lg px-5">
+          <i class="bi bi-grid-1x2 me-2"></i>Go to Dashboard
+        </a>
+        <a href="{{ url_for('upload') }}" class="btn btn-outline-primary-custom btn-lg px-5">
+          <i class="bi bi-upload me-2"></i>Upload Certificate
+        </a>
+      {% else %}
+        <a href="{{ url_for('register') }}" class="btn btn-primary-gradient btn-lg px-5">
+          <i class="bi bi-person-plus me-2"></i>Get Started Free
+        </a>
+        <a href="{{ url_for('login') }}" class="btn btn-outline-primary-custom btn-lg px-5">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </a>
+      {% endif %}
+    </div>
+    <div class="hero-stats animate-fade-up mt-5" style="animation-delay:.4s">
+      <div class="stat-pill"><i class="bi bi-award text-warning"></i> {{ total_certs }}+ Certificates</div>
+      <div class="stat-pill"><i class="bi bi-people text-info"></i> {{ total_users }}+ Users</div>
+      <div class="stat-pill"><i class="bi bi-shield-check text-success"></i> 100% Secure</div>
+      <div class="stat-pill"><i class="bi bi-infinity text-primary"></i> Lifetime Storage</div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="section-padding bg-features">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <h2 class="section-title">Everything You Need</h2>
+      <p class="section-subtitle">A complete certificate management solution</p>
+    </div>
+    <div class="row g-4">
+      {% set features = [
+        ('bi-cloud-arrow-up', 'Easy Upload', 'Upload PDF, JPG, PNG certificates in seconds with drag & drop support.', '#6c5ce7'),
+        ('bi-share', 'Smart Sharing', 'Generate unique public or private shareable links with QR codes instantly.', '#00b894'),
+        ('bi-bell', 'Expiry Alerts', 'Get notified when certificates are about to expire. Never miss a renewal.', '#fd79a8'),
+        ('bi-search', 'Search & Filter', 'Find any certificate instantly with powerful search and category filters.', '#0984e3'),
+        ('bi-pencil-square', 'Easy Editing', 'Update certificate details, replace files, and manage everything anytime.', '#e17055'),
+        ('bi-qr-code', 'QR Codes', 'Auto-generate QR codes for every certificate to share with a scan.', '#fdcb6e'),
+        ('bi-graph-up', 'Analytics', 'Track uploads, views, and get insights about your certificate portfolio.', '#a29bfe'),
+        ('bi-shield-lock', 'Privacy Control', 'Toggle certificates between public and private with one click.', '#55efc4'),
+      ] %}
+      {% for icon, title, desc, color in features %}
+      <div class="col-md-6 col-lg-3">
+        <div class="feature-card animate-fade-up">
+          <div class="feature-icon" style="background: {{ color }}20; color: {{ color }}">
+            <i class="bi {{ icon }}"></i>
+          </div>
+          <h5 class="feature-title">{{ title }}</h5>
+          <p class="feature-desc">{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="section-padding">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-subtitle">Three simple steps to certificate nirvana</p>
+    </div>
+    <div class="row g-4 align-items-center">
+      <div class="col-lg-4 text-center">
+        <div class="how-step animate-fade-up">
+          <div class="step-number">1</div>
+          <div class="step-icon">📤</div>
+          <h4>Upload</h4>
+          <p class="text-muted">Sign up and upload your certificates. We accept PDF, PNG, JPG and more.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 text-center">
+        <div class="how-step animate-fade-up" style="animation-delay:.15s">
+          <div class="step-number">2</div>
+          <div class="step-icon">🔗</div>
+          <h4>Share</h4>
+          <p class="text-muted">Generate a unique link or QR code and share your certificates publicly.</p>
+        </div>
+      </div>
+      <div class="col-lg-4 text-center">
+        <div class="how-step animate-fade-up" style="animation-delay:.3s">
+          <div class="step-number">3</div>
+          <div class="step-icon">🔒</div>
+          <h4>Store Forever</h4>
+          <p class="text-muted">Your data is permanently stored. Access, edit and manage anytime, anywhere.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+{% if not current_user %}
+<section class="cta-section">
+  <div class="container text-center">
+    <h2 class="cta-title">Ready to Get Started?</h2>
+    <p class="cta-subtitle">Join thousands of professionals managing their credentials with CertVault</p>
+    <a href="{{ url_for('register') }}" class="btn btn-white-gradient btn-lg px-5 mt-3">
+      <i class="bi bi-person-plus me-2"></i>Create Free Account
+    </a>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}My Certificates – CertVault{% endblock %}
+{% block content %}
+<div class="page-container">
+  <div class="page-header animate-fade-up">
+    <div>
+      <h2><i class="bi bi-collection me-2"></i>My Certificates</h2>
+      <p class="text-muted">{{ certs|length }} certificate{{ 's' if certs|length != 1 else '' }} found</p>
+    </div>
+    <a href="{{ url_for('upload') }}" class="btn btn-primary-gradient ms-auto">
+      <i class="bi bi-plus-circle me-1"></i>Upload New
+    </a>
+  </div>
+
+  <!-- Filters -->
+  <form method="GET" class="filter-bar card-glass p-3 mb-4 animate-fade-up">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control custom-input border-start-0 ps-0" name="q" value="{{ q }}" placeholder="Search certificates...">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select custom-input" name="category">
+          <option value="">All Categories</option>
+          {% for cat in categories %}<option value="{{ cat }}" {% if cat == selected_cat %}selected{% endif %}>{{ cat }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select custom-input" name="status">
+          <option value="">All Status</option>
+          <option value="active" {% if selected_status=='active' %}selected{% endif %}>Active</option>
+          <option value="expiring" {% if selected_status=='expiring' %}selected{% endif %}>Expiring Soon</option>
+          <option value="expired" {% if selected_status=='expired' %}selected{% endif %}>Expired</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select custom-input" name="sort">
+          <option value="newest" {% if sort=='newest' %}selected{% endif %}>Newest First</option>
+          <option value="oldest" {% if sort=='oldest' %}selected{% endif %}>Oldest First</option>
+          <option value="title" {% if sort=='title' %}selected{% endif %}>A-Z</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary-gradient flex-fill">Filter</button>
+        <a href="{{ url_for('certificates') }}" class="btn btn-outline-secondary">Clear</a>
+      </div>
+    </div>
+  </form>
+
+  <!-- Grid -->
+  {% if certs %}
+  <div class="row g-4">
+    {% for cert in certs %}
+    <div class="col-md-6 col-xl-4 animate-fade-up" style="animation-delay:{{ loop.index0 * 0.05 }}s">
+      <div class="cert-card">
+        <div class="cert-card-header" style="background: {% if loop.index % 6 == 1 %}var(--gradient-primary){% elif loop.index % 6 == 2 %}linear-gradient(135deg,#00b894,#00cec9){% elif loop.index % 6 == 3 %}linear-gradient(135deg,#fd79a8,#e17055){% elif loop.index % 6 == 4 %}linear-gradient(135deg,#0984e3,#6c5ce7){% elif loop.index % 6 == 5 %}linear-gradient(135deg,#fdcb6e,#e17055){% else %}linear-gradient(135deg,#a29bfe,#6c5ce7){% endif %}">
+          <div class="cert-type-icon">
+            <i class="bi bi-{% if cert.file_type == 'pdf' %}file-pdf{% elif cert.file_type in ['jpg','jpeg','png','webp'] %}image{% else %}award{% endif %}"></i>
+          </div>
+          <div class="cert-card-badges">
+            {% if cert.is_public %}<span class="badge badge-public"><i class="bi bi-globe"></i></span>{% endif %}
+            {% if cert.is_expired %}<span class="badge bg-danger">Expired</span>
+            {% elif cert.expiring_soon %}<span class="badge bg-warning text-dark">Expiring</span>{% endif %}
+          </div>
+        </div>
+        <div class="cert-card-body">
+          <div class="cert-card-category">{{ cert.category }}</div>
+          <h6 class="cert-card-title">{{ cert.title }}</h6>
+          <p class="cert-card-issuer"><i class="bi bi-building me-1"></i>{{ cert.issuer }}</p>
+          <div class="cert-card-dates">
+            <span><i class="bi bi-calendar-check me-1"></i>{{ cert.issue_date|fmtmonth }}</span>
+            {% if cert.expiry_date %}
+            <span class="{% if cert.is_expired %}text-danger{% elif cert.expiring_soon %}text-warning{% endif %}">
+              <i class="bi bi-calendar-x me-1"></i>{{ cert.expiry_date|fmtmonth }}
+            </span>
+            {% endif %}
+          </div>
+          {% if cert.tag_list %}
+          <div class="cert-card-tags">
+            {% for tag in cert.tag_list[:3] %}<span class="badge badge-tag">{{ tag }}</span>{% endfor %}
+            {% if cert.tag_list|length > 3 %}<span class="badge badge-tag">+{{ cert.tag_list|length - 3 }}</span>{% endif %}
+          </div>
+          {% endif %}
+        </div>
+        <div class="cert-card-footer">
+          <a href="{{ url_for('certificate_detail', cid=cert.id) }}" class="btn btn-sm btn-primary-gradient">View</a>
+          <a href="{{ url_for('edit_certificate', cid=cert.id) }}" class="btn btn-sm btn-outline-primary-custom">Edit</a>
+          {% if cert.file_path %}
+          <a href="{{ url_for('download_certificate', cid=cert.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-download"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state card-glass animate-fade-up py-5">
+    <div class="empty-icon">🔍</div>
+    <h4>No certificates found</h4>
+    <p class="text-muted">
+      {% if q %}No results for "{{ q }}"{% else %}You haven't uploaded any certificates yet{% endif %}
+    </p>
+    <a href="{{ url_for('upload') }}" class="btn btn-primary-gradient">Upload Your First Certificate</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

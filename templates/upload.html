@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}Upload Certificate – CertVault{% endblock %}
+{% block content %}
+<div class="page-container">
+  <div class="page-header animate-fade-up">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-back"><i class="bi bi-arrow-left"></i> Back</a>
+    <h2><i class="bi bi-cloud-upload me-2"></i>Upload Certificate</h2>
+    <p class="text-muted">Add a new certificate to your vault</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <form method="POST" enctype="multipart/form-data" class="animate-fade-up" id="uploadForm">
+        <!-- File Drop Zone -->
+        <div class="card-glass p-4 mb-4">
+          <h6 class="fw-600 mb-3"><i class="bi bi-paperclip me-2"></i>Certificate File</h6>
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-content" id="dropContent">
+              <div class="drop-icon">📄</div>
+              <div class="drop-title">Drag & drop your certificate here</div>
+              <div class="drop-subtitle text-muted">or click to browse files</div>
+              <div class="mt-3">
+                <span class="badge bg-secondary me-1">PDF</span>
+                <span class="badge bg-secondary me-1">JPG</span>
+                <span class="badge bg-secondary me-1">PNG</span>
+                <span class="badge bg-secondary">WEBP</span>
+              </div>
+              <small class="text-muted d-block mt-2">Max size: 16 MB</small>
+            </div>
+            <div class="drop-zone-preview d-none" id="filePreview">
+              <img id="previewImg" src="" alt="Preview" class="preview-img d-none">
+              <div id="pdfPreviewIcon" class="pdf-icon d-none"><i class="bi bi-file-pdf-fill"></i></div>
+              <div class="preview-info">
+                <div id="fileName" class="fw-600"></div>
+                <div id="fileSize" class="text-muted small"></div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                <i class="bi bi-x"></i> Remove
+              </button>
+            </div>
+          </div>
+          <input type="file" name="certificate_file" id="fileInput" class="d-none"
+                 accept=".pdf,.jpg,.jpeg,.png,.gif,.webp" onchange="handleFileSelect(this)">
+        </div>
+
+        <!-- Certificate Details -->
+        <div class="card-glass p-4 mb-4">
+          <h6 class="fw-600 mb-3"><i class="bi bi-card-text me-2"></i>Certificate Details</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-500">Certificate Title *</label>
+              <input type="text" class="form-control custom-input" name="title" placeholder="e.g. AWS Solutions Architect" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-500">Issuer / Organization *</label>
+              <input type="text" class="form-control custom-input" name="issuer" placeholder="e.g. Amazon Web Services" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-500">Description</label>
+              <textarea class="form-control custom-input" name="description" rows="3" placeholder="Brief description of what this certificate represents..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-500">Issue Date *</label>
+              <input type="date" class="form-control custom-input" name="issue_date" required max="{{ now.strftime('%Y-%m-%d') }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-500">Expiry Date <span class="text-muted">(optional)</span></label>
+              <input type="date" class="form-control custom-input" name="expiry_date">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-500">Tags / Skills</label>
+              <input type="text" class="form-control custom-input" name="tags" id="tagsInput"
+                     placeholder="e.g. Cloud, AWS, DevOps, Python">
+              <div id="tagPills" class="d-flex flex-wrap gap-1 mt-2"></div>
+              <small class="text-muted">Separate with commas</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Privacy -->
+        <div class="card-glass p-4 mb-4">
+          <h6 class="fw-600 mb-3"><i class="bi bi-shield-lock me-2"></i>Privacy Settings</h6>
+          <div class="privacy-toggle-row">
+            <div>
+              <div class="fw-500">Make this certificate public</div>
+              <div class="text-muted small">Anyone with the link can view this certificate</div>
+            </div>
+            <div class="form-check form-switch ms-auto">
+              <input class="form-check-input" type="checkbox" id="is_public" name="is_public" role="switch">
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn btn-primary-gradient btn-lg px-5" id="submitBtn">
+            <i class="bi bi-cloud-upload me-2"></i>Upload Certificate
+          </button>
+          <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const dropContent = document.getElementById('dropContent');
+const filePreview = document.getElementById('filePreview');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) { fileInput.files = e.dataTransfer.files; handleFileSelect(fileInput); }
+});
+
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  dropContent.classList.add('d-none');
+  filePreview.classList.remove('d-none');
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById('previewImg').src = e.target.result; document.getElementById('previewImg').classList.remove('d-none'); };
+    reader.readAsDataURL(file);
+  } else {
+    document.getElementById('pdfPreviewIcon').classList.remove('d-none');
+  }
+}
+
+function clearFile() {
+  fileInput.value = '';
+  dropContent.classList.remove('d-none');
+  filePreview.classList.add('d-none');
+  document.getElementById('previewImg').classList.add('d-none');
+  document.getElementById('pdfPreviewIcon').classList.add('d-none');
+}
+
+// Tag pills
+document.getElementById('tagsInput').addEventListener('input', function() {
+  const tags = this.value.split(',').map(t => t.trim()).filter(Boolean);
+  const pills = document.getElementById('tagPills');
+  pills.innerHTML = tags.map(t => `<span class="badge badge-tag">${t}</span>`).join('');
+});
+
+// Submit with loading
+document.getElementById('uploadForm').addEventListener('submit', function() {
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+  btn.disabled = true;
+});
+
+// Set today as default issue_date
+document.querySelector('[name="issue_date"]').valueAsDate = new Date();
+</script>
+{% endblock %}

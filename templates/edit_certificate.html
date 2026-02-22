@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Edit – {{ cert.title }} – CertVault{% endblock %}
+{% block content %}
+<div class="page-container">
+  <div class="page-header animate-fade-up">
+    <a href="{{ url_for('certificate_detail', cid=cert.id) }}" class="btn btn-back"><i class="bi bi-arrow-left"></i> Back</a>
+    <h2><i class="bi bi-pencil-square me-2"></i>Edit Certificate</h2>
+  </div>
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <form method="POST" enctype="multipart/form-data" class="animate-fade-up" id="editForm">
+        <!-- Current File -->
+        {% if cert.file_path %}
+        <div class="card-glass p-4 mb-4">
+          <h6 class="fw-600 mb-3"><i class="bi bi-file me-2"></i>Current File</h6>
+          <div class="current-file-preview">
+            {% if cert.file_type in ['jpg','jpeg','png','gif','webp'] %}
+              <img src="{{ url_for('uploaded_file', filename=cert.file_path) }}" alt="Current" class="current-img-thumb">
+            {% else %}
+              <div class="pdf-thumb"><i class="bi bi-file-pdf-fill text-danger fs-2"></i></div>
+            {% endif %}
+            <div>
+              <div class="fw-500">Current attachment</div>
+              <div class="text-muted small">{{ cert.file_type.upper() }} file</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Replace File -->
+        <div class="card-glass p-4 mb-4">
+          <h6 class="fw-600 mb-3"><i class="bi bi-arrow-repeat me-2"></i>Replace File <span class="text-muted fw-400">(optional)</span></h6>
+          <div class="drop-zone" id="dropZone" style="min-height:100px">
+            <div class="drop-zone-content">
+              <div class="drop-icon" style="font-size:2rem">📁</div>
+              <div class="drop-subtitle text-muted">Click to upload a new file (replaces current)</div>
+            </div>
+          </div>
+          <input type="file" name="certificate_file" id="fileInput" class="d-none" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp">
+        </div>
+
+        <!-- Details -->
+        <div class="card-glass p-4 mb-4">
+          <h6 class="fw-600 mb-3"><i class="bi bi-card-text me-2"></i>Certificate Details</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-500">Certificate Title *</label>
+              <input type="text" class="form-control custom-input" name="title" value="{{ cert.title }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-500">Issuer / Organization *</label>
+              <input type="text" class="form-control custom-input" name="issuer" value="{{ cert.issuer }}" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-500">Description</label>
+              <textarea class="form-control custom-input" name="description" rows="3">{{ cert.description }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-500">Issue Date *</label>
+              <input type="date" class="form-control custom-input" name="issue_date" value="{{ cert.issue_date|fmtdate('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-500">Expiry Date</label>
+              <input type="date" class="form-control custom-input" name="expiry_date" value="{{ cert.expiry_date|fmtdate('%Y-%m-%d') if cert.expiry_date else '' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-500">Tags / Skills</label>
+              <input type="text" class="form-control custom-input" name="tags" id="tagsInput" value="{{ cert.tags }}">
+              <div id="tagPills" class="d-flex flex-wrap gap-1 mt-2">
+                {% for tag in cert.tag_list %}<span class="badge badge-tag">{{ tag }}</span>{% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-glass p-4 mb-4">
+          <div class="privacy-toggle-row">
+            <div>
+              <div class="fw-500">Make this certificate public</div>
+              <div class="text-muted small">Anyone with the link can view this certificate</div>
+            </div>
+            <div class="form-check form-switch ms-auto">
+              <input class="form-check-input" type="checkbox" id="is_public" name="is_public" role="switch" {% if cert.is_public %}checked{% endif %}>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn btn-primary-gradient btn-lg px-5" id="submitBtn">
+            <i class="bi bi-check-circle me-2"></i>Save Changes
+          </button>
+          <a href="{{ url_for('certificate_detail', cid=cert.id) }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', function() {
+  if (this.files[0]) {
+    dropZone.querySelector('.drop-subtitle').textContent = '✅ ' + this.files[0].name;
+  }
+});
+document.getElementById('tagsInput').addEventListener('input', function() {
+  const tags = this.value.split(',').map(t => t.trim()).filter(Boolean);
+  document.getElementById('tagPills').innerHTML = tags.map(t => `<span class="badge badge-tag">${t}</span>`).join('');
+});
+document.getElementById('editForm').addEventListener('submit', function() {
+  const btn = document.getElementById('submitBtn');
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}
