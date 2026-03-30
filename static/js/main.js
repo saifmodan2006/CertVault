@@ -8,6 +8,14 @@ function applyTheme(t) {
   if (icon) icon.className = t === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
 }
 
+function debounce(fn, wait = 350) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), wait);
+  };
+}
+
 (function initTheme() {
   const saved = localStorage.getItem(THEME_KEY) ||
     (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -29,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (nav) {
     window.addEventListener('scroll', () => {
       nav.classList.toggle('scrolled', window.scrollY > 10);
-    });
+    }, { passive: true });
   }
 
   // Sidebar toggle
@@ -55,19 +63,23 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Animate elements on scroll
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.animationPlayState = 'running';
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1 });
+  const animateItems = document.querySelectorAll('.animate-fade-up');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion && animateItems.length) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
 
-  document.querySelectorAll('.animate-fade-up').forEach(el => {
-    el.style.animationPlayState = 'paused';
-    observer.observe(el);
-  });
+    animateItems.forEach(el => {
+      el.style.animationPlayState = 'paused';
+      observer.observe(el);
+    });
+  }
 
   // Bootstrap tooltips
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
@@ -105,6 +117,24 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-row-link]').forEach(tr => {
     tr.style.cursor = 'pointer';
     tr.addEventListener('click', () => window.location.href = tr.dataset.rowLink);
+  });
+
+  // Auto-apply filters with debounce for better UX
+  document.querySelectorAll('form[data-auto-filter="true"]').forEach(form => {
+    const controls = form.querySelectorAll('.js-filter-control');
+    const submitForm = debounce(() => form.requestSubmit(), 450);
+    controls.forEach(control => {
+      if (control.tagName === 'SELECT') {
+        control.addEventListener('change', () => form.requestSubmit());
+      } else {
+        control.addEventListener('input', submitForm);
+      }
+    });
+
+    form.addEventListener('submit', () => {
+      form.classList.add('is-submitting');
+      form.querySelectorAll('button').forEach(btn => btn.disabled = true);
+    });
   });
 });
 
@@ -147,7 +177,9 @@ function updateTagPills(value) {
 }
 
 function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard! 📋', 'success'));
+  navigator.clipboard.writeText(text)
+    .then(() => showToast('Copied to clipboard! 📋', 'success'))
+    .catch(() => showToast('Could not copy automatically. Please copy manually.', 'warning'));
 }
 
 // ─── Ripple Effect on Buttons ─────────────────────────────────
@@ -199,6 +231,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ─── Keyboard Shortcuts ───────────────────────────────────────
 document.addEventListener('keydown', (e) => {
+  const active = document.activeElement;
+  const isTyping = active && (
+    active.tagName === 'INPUT' ||
+    active.tagName === 'TEXTAREA' ||
+    active.tagName === 'SELECT' ||
+    active.isContentEditable
+  );
+  if (isTyping) return;
+
   if (e.ctrlKey || e.metaKey) {
     if (e.key === 'k') { e.preventDefault(); document.querySelector('[name="q"]')?.focus(); }
     if (e.key === 'u') { e.preventDefault(); window.location.href = '/upload'; }
