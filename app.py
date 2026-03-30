@@ -79,6 +79,11 @@ def init_db():
             created_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
+        CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+        CREATE INDEX IF NOT EXISTS idx_cert_user_created ON certificates(user_id, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_cert_user_category ON certificates(user_id, category);
+        CREATE INDEX IF NOT EXISTS idx_cert_user_public ON certificates(user_id, is_public);
+        CREATE INDEX IF NOT EXISTS idx_logs_user_created ON activity_logs(user_id, created_at DESC);
         ''')
         conn.commit()
 

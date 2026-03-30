@@ -193,14 +193,23 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-fetch('/api/stats').then(r => r.json()).then(data => {
+const activityCanvas = document.getElementById('activityChart');
+const categoryCanvas = document.getElementById('categoryChart');
+
+if (activityCanvas && categoryCanvas) {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), 7000);
+
+  fetch('/api/stats', { signal: controller.signal })
+  .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to load dashboard stats')))
+  .then(data => {
   const months = Object.keys(data.monthly);
   const values = Object.values(data.monthly);
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const textColor = isDark ? '#aaa' : '#666';
 
   // Activity chart
-  new Chart(document.getElementById('activityChart'), {
+  new Chart(activityCanvas, {
     type: 'bar',
     data: {
       labels: months.slice(-6),
@@ -228,7 +237,7 @@ fetch('/api/stats').then(r => r.json()).then(data => {
   const cats = Object.keys(data.categories);
   const catVals = Object.values(data.categories);
   const colors = ['#6c5ce7','#00b894','#fd79a8','#0984e3','#e17055','#fdcb6e','#a29bfe'];
-  new Chart(document.getElementById('categoryChart'), {
+  new Chart(categoryCanvas, {
     type: 'doughnut',
     data: { labels: cats, datasets: [{ data: catVals, backgroundColor: colors, borderWidth: 0 }] },
     options: {
@@ -239,6 +248,11 @@ fetch('/api/stats').then(r => r.json()).then(data => {
       cutout: '70%'
     }
   });
-});
+  })
+  .catch(() => {
+    activityCanvas.parentElement.insertAdjacentHTML('beforeend',
+      '<small class="text-muted d-block mt-2">Stats are temporarily unavailable.</small>');
+  });
+}
 </script>
 {% endblock %}

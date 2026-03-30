@@ -13,22 +13,22 @@
   </div>
 
   <!-- Filters -->
-  <form method="GET" class="filter-bar card-glass p-3 mb-4 animate-fade-up">
+  <form method="GET" class="filter-bar card-glass p-3 mb-4 animate-fade-up" id="certificatesFilterForm" data-auto-filter="true">
     <div class="row g-2 align-items-end">
       <div class="col-md-4">
         <div class="input-group">
           <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
-          <input type="text" class="form-control custom-input border-start-0 ps-0" name="q" value="{{ q }}" placeholder="Search certificates...">
+          <input type="text" class="form-control custom-input border-start-0 ps-0 js-filter-control" name="q" value="{{ q }}" placeholder="Search certificates..." autocomplete="off">
         </div>
       </div>
       <div class="col-md-2">
-        <select class="form-select custom-input" name="category">
+        <select class="form-select custom-input js-filter-control" name="category">
           <option value="">All Categories</option>
           {% for cat in categories %}<option value="{{ cat }}" {% if cat == selected_cat %}selected{% endif %}>{{ cat }}</option>{% endfor %}
         </select>
       </div>
       <div class="col-md-2">
-        <select class="form-select custom-input" name="status">
+        <select class="form-select custom-input js-filter-control" name="status">
           <option value="">All Status</option>
           <option value="active" {% if selected_status=='active' %}selected{% endif %}>Active</option>
           <option value="expiring" {% if selected_status=='expiring' %}selected{% endif %}>Expiring Soon</option>
@@ -36,7 +36,7 @@
         </select>
       </div>
       <div class="col-md-2">
-        <select class="form-select custom-input" name="sort">
+        <select class="form-select custom-input js-filter-control" name="sort">
           <option value="newest" {% if sort=='newest' %}selected{% endif %}>Newest First</option>
           <option value="oldest" {% if sort=='oldest' %}selected{% endif %}>Oldest First</option>
           <option value="title" {% if sort=='title' %}selected{% endif %}>A-Z</option>
@@ -47,6 +47,7 @@
         <a href="{{ url_for('certificates') }}" class="btn btn-outline-secondary">Clear</a>
       </div>
     </div>
+    <small class="text-muted d-block mt-2">Tip: filters auto-apply while you type.</small>
   </form>
 
   <!-- Grid -->
